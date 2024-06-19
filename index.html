@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSH Key Pair Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>SSH Key Pair Generator</h1>
+        <div class="form-container">
+            <label for="key-name">Key Name:</label>
+            <input type="text" id="key-name" placeholder="Enter key name">
+
+            <label for="key-type">Key Type:</label>
+            <select id="key-type">
+                <option value="rsa">RSA (default)</option>
+                <option value="dsa">DSA</option>
+                <option value="ecdsa">ECDSA</option>
+                <option value="ed25519">ED25519</option>
+            </select>
+
+            <label for="key-length">Key Length:</label>
+            <input type="number" id="key-length" value="2048" min="1024" max="8192" step="1024">
+
+            <button onclick="generateSSHKey()">Generate Key Pair</button>
+
+            <div id="output"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
