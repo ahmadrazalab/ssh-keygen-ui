@@ -4,13 +4,12 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const fs = require('fs');
 const archiver = require('archiver');
+const cors = require('cors');  // Add this line
 
 const app = express();
 const port = 3000;
 
 app.use(bodyParser.json());
-
-const cors = require('cors');
 app.use(cors());
 
 const keysDirectory = path.join(__dirname, 'keys');
@@ -63,6 +62,14 @@ app.post('/generate-key', (req, res) => {
         archive.file(privateKeyPath, { name: keyName });
         archive.finalize();
     });
+});
+
+// Serve static files from the 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve index.html for the root path
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.use('/keys', express.static(keysDirectory));
