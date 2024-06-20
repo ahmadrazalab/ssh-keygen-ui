@@ -2,11 +2,18 @@ function generateSSHKey() {
     const keyName = document.getElementById('key-name').value.trim();
     const keyType = document.getElementById('key-type').value;
     const keyLength = document.getElementById('key-length').value;
+    const output = document.getElementById('output');
+    const loading = document.getElementById('loading');
+    const generateButton = document.getElementById('generate-button');
 
     if (!keyName) {
         alert('Please enter a key name.');
         return;
     }
+
+    output.innerHTML = '';
+    loading.style.display = 'block';
+    generateButton.disabled = true;
 
     const formData = {
         keyName,
@@ -23,30 +30,23 @@ function generateSSHKey() {
     })
     .then(response => response.json())
     .then(data => {
-        document.getElementById('output').innerText = data.message;
+        loading.style.display = 'none';
+        generateButton.disabled = false;
+        output.innerHTML = `<p>${data.message}</p>`;
 
-        // Download links for keys
-        const publicKeyPath = data.publicKeyPath;
-        const privateKeyPath = data.privateKeyPath;
-
-        const publicKeyLink = document.createElement('a');
-        publicKeyLink.href = publicKeyPath;
-        publicKeyLink.textContent = 'Download Public Key';
-        publicKeyLink.download = `${keyName}.pub`;
-        publicKeyLink.style.display = 'block';
-        publicKeyLink.style.marginTop = '10px';
-        document.getElementById('output').appendChild(publicKeyLink);
-
-        const privateKeyLink = document.createElement('a');
-        privateKeyLink.href = privateKeyPath;
-        privateKeyLink.textContent = 'Download Private Key';
-        privateKeyLink.download = `${keyName}`;
-        privateKeyLink.style.display = 'block';
-        privateKeyLink.style.marginTop = '10px';
-        document.getElementById('output').appendChild(privateKeyLink);
+        // Download link for zip file
+        const zipPath = data.zipPath;
+        const zipLink = document.createElement('a');
+        zipLink.href = zipPath;
+        zipLink.download = `${keyName}.zip`;
+        zipLink.textContent = 'Download Key Pair (ZIP)';
+        zipLink.className = 'download-link';
+        output.appendChild(zipLink);
     })
     .catch(error => {
         console.error('Error:', error);
-        document.getElementById('output').innerText = 'Error occurred while generating key pair.';
+        loading.style.display = 'none';
+        generateButton.disabled = false;
+        output.innerHTML = '<p class="error">Error occurred while generating key pair.</p>';
     });
 }

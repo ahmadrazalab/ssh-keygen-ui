@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SSH Key Pair Generator</title>
+    <title>SSH KeyGen</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -24,7 +24,7 @@
             <label for="key-length">Key Length:</label>
             <input type="number" id="key-length" value="2048" min="1024" max="8192" step="1024">
 
-            <button onclick="generateSSHKey()">Generate Key Pair</button>
+            <button onclick="generateSSHKey()">Generate</button>
 
             <div id="output"></div>
         </div>
@@ -33,3 +33,48 @@
     <script src="script.js"></script>
 </body>
 </html>
+
+<script>
+function generateSSHKey() {
+    const keyName = document.getElementById('key-name').value.trim();
+    const keyType = document.getElementById('key-type').value;
+    const keyLength = document.getElementById('key-length').value;
+
+    if (!keyName) {
+        alert('Please enter a key name.');
+        return;
+    }
+
+    const formData = {
+        keyName,
+        keyType,
+        keyLength
+    };
+
+    fetch('http://localhost:3000/generate-key', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('output').innerText = data.message;
+
+        // Download link for zip file
+        const zipPath = data.zipPath;
+
+        const zipLink = document.createElement('a');
+        zipLink.href = zipPath;
+        zipLink.download = `${keyName}.zip`;
+        document.body.appendChild(zipLink);
+        zipLink.click();
+        document.body.removeChild(zipLink);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('output').innerText = 'Error occurred while generating key pair.';
+    });
+}
+</script>
