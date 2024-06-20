@@ -2,15 +2,21 @@ const express = require('express');
 const { exec } = require('child_process');
 const bodyParser = require('body-parser');
 const path = require('path');
+const fs = require('fs');
+const archiver = require('archiver');
 
 const app = express();
 const port = 3000;
 
 app.use(bodyParser.json());
 
-// Example CORS setup (adjust as needed)
 const cors = require('cors');
 app.use(cors());
+
+const keysDirectory = path.join(__dirname, 'keys');
+if (!fs.existsSync(keysDirectory)) {
+    fs.mkdirSync(keysDirectory);
+}
 
 app.post('/generate-key', (req, res) => {
     const { keyName, keyType, keyLength } = req.body;
@@ -19,7 +25,8 @@ app.post('/generate-key', (req, res) => {
         return res.status(400).json({ message: 'Missing parameters' });
     }
 
-    const command = `ssh-keygen -t ${keyType} -b ${keyLength} -C "${keyName}" -f ${keyName}`;
+    const keyPath = path.join(keysDirectory, keyName);
+    const command = `ssh-keygen -t ${keyType} -b ${keyLength} -C "${keyName}" -f ${keyPath} -N ""`;
 
     exec(command, (error, stdout, stderr) => {
         if (error) {
@@ -32,16 +39,33 @@ app.post('/generate-key', (req, res) => {
         }
         console.log(`stdout: ${stdout}`);
 
-        const publicKeyPath = `${keyName}.pub`;
-        const privateKeyPath = `${keyName}`;
+        const publicKeyPath = `${keyPath}.pub`;
+        const privateKeyPath = keyPath;
+        const zipPath = `${keyPath}.zip`;
 
-        res.status(200).json({
-            message: `Key pair generated successfully:\n${stdout}`,
-            publicKeyPath,
-            privateKeyPath
+        const output = fs.createWriteStream(zipPath);
+        const archive = archiver('zip', { zlib: { level: 9 } });
+
+        output.on('close', () => {
+            res.status(200).json({
+                message: `Key pair generated successfully:\n${stdout}`,
+                zipPath: `/keys/${keyName}.zip`
+            });
         });
+
+        archive.on('error', (err) => {
+            console.error(`Error: ${err.message}`);
+            return res.status(500).json({ message: 'Error occurred while creating zip file.' });
+        });
+
+        archive.pipe(output);
+        archive.file(publicKeyPath, { name: `${keyName}.pub` });
+        archive.file(privateKeyPath, { name: keyName });
+        archive.finalize();
     });
 });
+
+app.use('/keys', express.static(keysDirectory));
 
 app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
